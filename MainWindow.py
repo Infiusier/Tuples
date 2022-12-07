@@ -31,7 +31,7 @@ class ProcessWindow(QWidget,QtCore.QObject):
         
         self.send_button = QPushButton("Send")
         
-        self.log = QLineEdit()
+        self.log = QTextEdit()
         
         mainLayout.addWidget(self.destination_label)
         mainLayout.addWidget(self.destination_combobox)
@@ -47,11 +47,15 @@ class ProcessWindow(QWidget,QtCore.QObject):
         
 #------------------------- Configure Widgets -------------------------------------
         self.send_button.clicked.connect(self.send_callback)
+        self.process.gui_controller.log_signal.connect(self.append_to_log)
         self.setLayout(mainLayout)
         
     def send_callback(self):
-        self.process.send_message(self.message_input.text(),self.destination_combobox.currentText())
+        self.process.send_message_callback(self.message_input.text(),self.destination_combobox.currentText())
         self.message_input.clear()
+        
+    def append_to_log(self,message):
+        self.log.append(message)
         
     def update_list_of_process(self):
         list_of_process = [process.name for process in self.process.parent_vm.list_of_process]

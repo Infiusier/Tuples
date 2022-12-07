@@ -5,6 +5,8 @@ from queue import Queue
 from enum import Enum,auto
 import random
 
+from PySide2 import QtCore
+
 import linsimpy
 
 class Cloud():
@@ -49,6 +51,7 @@ class Vm():
         self.list_of_process.append(process)
         self.space.eval((process.name,process.run()))
         self.space.run()
+        process.run()
         
     def remove(self,process):
         self.list_of_process.remove(process)
@@ -67,12 +70,20 @@ class Vm():
             self.space.run()
 
 class Process():
+    class GUI_Controller(QtCore.QObject):
+        log_signal=QtCore.Signal(object)
+        
+        def append_to_log(self,message: str):
+            self.log_signal.emit(message)
+    
     def __init__(self,name,parent_vm : Vm):
         self.parent_vm = parent_vm
         self.space = self.parent_vm.space
         self.name = name
         self.is_running = False
         self.window = None
+        self.gui_controller = Process.GUI_Controller()
+        
         
     def run(self):
         print("Process %s running!" % self.name)
@@ -80,19 +91,29 @@ class Process():
         self.is_running = True
         
         while self.is_running:
-            message = yield self.space.in_((object, object))
-            print(message) 
-            
+            print("Waiting...")
+            message = yield self.space.in_((self.name, dict))
+            print(f"Message received: {message}")
+            msg = f"Id: {message[1]['id']} --> {message[1]['payload']}"
+            self.gui_controller.append_to_log(msg)
+
     def update_space(self,space):
         self.space = space
         
     def stop(self):
         self.is_running = False
-             
-    def send_message(self,message,id):
+        
+    def send_message_callback(self,message,id):
         print(message)
+        self.space.eval((self.name,self.send_message(message,id)))
+        self.space.run()
+          
+    def send_message(self,message,id):
+        msg = {}
+        msg['id'] = self.name
+        msg['payload'] = message
         yield self.space.timeout(1)
-        yield self.space.out((id, message))
+        yield self.space.out((id, msg))
         
         
 def main():
@@ -106,8 +127,11 @@ def main():
     vm.append(p1)
     vm.append(p2)
     
-    p2.send_message("TESTE", "P1")
-    print("oi")
+    p2.send_message_callback("hello there", "P1")
+    print(vm.space.items)
+    
+    while 1:
+        pass
 
 if __name__ == "__main__":
     main()
