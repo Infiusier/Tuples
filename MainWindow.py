@@ -14,7 +14,6 @@ class Object_Type():
     HOST = "HOST"
     VM = "VM"
     PROCESS = "PROCESS"
-    
 
 class ProcessWindow(QWidget,QtCore.QObject):
     def __init__(self,process: Process):
@@ -32,6 +31,8 @@ class ProcessWindow(QWidget,QtCore.QObject):
         
         self.send_button = QPushButton("Send")
         
+        self.log = QLineEdit()
+        
         mainLayout.addWidget(self.destination_label)
         mainLayout.addWidget(self.destination_combobox)
         
@@ -40,6 +41,10 @@ class ProcessWindow(QWidget,QtCore.QObject):
         
         mainLayout.addWidget(self.send_button)
         
+        mainLayout.addWidget(self.log)
+        
+        self.update_list_of_process()
+        
 #------------------------- Configure Widgets -------------------------------------
         self.send_button.clicked.connect(self.send_callback)
         self.setLayout(mainLayout)
@@ -47,6 +52,10 @@ class ProcessWindow(QWidget,QtCore.QObject):
     def send_callback(self):
         self.process.send_message(self.message_input.text(),self.destination_combobox.currentText())
         self.message_input.clear()
+        
+    def update_list_of_process(self):
+        list_of_process = [process.name for process in self.process.parent_vm.list_of_process]
+        self.destination_combobox.addItems(list_of_process)
         
     def display_window(self):
         self.show()
@@ -277,6 +286,15 @@ class MainWindow(QtWidgets.QMainWindow,Ui_MainWindow,QtCore.QObject):
         if len(self.p_process_combobox.currentText()) == 0:
             return
         
+        cloud = [cloud for cloud in self.list_of_clouds if cloud.name == self.p_clouds_combobox.currentText()][0]
+        host = [host for host in cloud.list_of_hosts if host.name == self.p_hosts_combobox.currentText()][0]
+        vm = [vm for vm in host.list_of_vms if vm.name == self.p_vms_combobox.currentText()][0]
+        process = [process for process in vm.list_of_process if process.name == self.p_process_combobox.currentText()][0]
+        
+        process_window = ProcessWindow(process)
+        process_window.display_window()
+        process.window = process_window
+        
     def create_callback(self):
         
         object_type = self.creation_window.object_type
@@ -310,7 +328,6 @@ class MainWindow(QtWidgets.QMainWindow,Ui_MainWindow,QtCore.QObject):
                 vm_parent = [vm for vm in self.list_of_vms if vm.name == object_parent][0]
                 process = Process(object_name,vm_parent)
                 vm_parent.append(process)
-                process.run()
                 self.list_of_process.append(process)
         
         self.update_open_process_comboboxes()

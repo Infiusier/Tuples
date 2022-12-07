@@ -48,14 +48,13 @@ class Vm():
     def append(self,process):
         self.list_of_process.append(process)
         self.space.eval((process.name,process.run()))
+        self.space.run()
         
     def remove(self,process):
         self.list_of_process.remove(process)
         
     def run(self):
         print("Vm %s running!" % self.name)
-        t = threading.Thread(target = self.loop,args=())
-        t.start()
         
     def stop(self):
         self.is_running = False
@@ -64,7 +63,7 @@ class Vm():
         self.is_running = True
         
         while self.is_running:
-            time.sleep(0.1)
+            #time.sleep(0.1)
             self.space.run()
 
 class Process():
@@ -73,6 +72,7 @@ class Process():
         self.space = self.parent_vm.space
         self.name = name
         self.is_running = False
+        self.window = None
         
     def run(self):
         print("Process %s running!" % self.name)
@@ -80,7 +80,7 @@ class Process():
         self.is_running = True
         
         while self.is_running:
-            message = yield self.space.in_((self.name, str))
+            message = yield self.space.in_((object, object))
             print(message) 
             
     def update_space(self,space):
@@ -90,78 +90,24 @@ class Process():
         self.is_running = False
              
     def send_message(self,message,id):
+        print(message)
+        yield self.space.timeout(1)
         yield self.space.out((id, message))
-
-class Application():
+        
+        
+def main():
+     
+    cloud = Cloud("Cloud")
+    host = Host("Host", cloud)
+    vm = Vm("Vm", host)
+    p1 = Process("P1", vm)
+    p2 = Process("P2", vm)
     
-    def __init__(self,sensor_type,sensor_name,current_value,max_value,min_value,discover_topic,topic,mqtt_broker,mqtt_port):
-        super(Application,self).__init__()
-        
-        self.sensor_type = sensor_type
-        self.sensor_name = sensor_name
-        self.current_value = current_value
-        self.max_value = max_value
-        self.min_value = min_value
-        
-        self.discover_topic = discover_topic
-        self.topic = topic
-        
-        self.mqtt_broker = mqtt_broker
-        self.mqtt_port = mqtt_port
-        
-        client_id = f'MoM-{random.randint(0, 10000)}'
-        username = ''
-        password = ''
-        
-        self.mqtt = Mqtt(client_id, username, password, self.mqtt_broker, self.mqtt_port)
-        #self.mqtt.loop_forever()
-        
-        
-    def start(self):
-        thread = threading.Thread(target=self.run,args=())
-        thread.start()
-        
-    def run(self):
-        '''Função que roda o loop principal'''
-        self.stop=False
-
-        while self.stop == False:
-            delay = random.randint(1,5)
-            time.sleep(delay)
-            
-            self.send_discover_signal()
-            self.send_current_value()
-            
-        print("Stopping")
-            
-    def send_discover_signal(self):
-        json_payload = {}
-        json_payload["sensor_type"] = self.sensor_type
-        json_payload["sensor_name"] = self.sensor_name
-        
-        str_payload = "{}".format(json_payload)
-        
-        self.mqtt.publish(self.discover_topic,str_payload)
+    vm.append(p1)
+    vm.append(p2)
     
-    def send_current_value(self):
-        
-        if not (self.current_value > self.max_value or self.current_value < self.min_value):
-            return
-        
-        if self.current_value > self.max_value:
-            warning_msg = "Sensor beyond threshold!"
-            
-        elif self.current_value < self.min_value:
-            warning_msg = "Sensor bellow threshold!"    
-        
-        json_payload = {}
-        json_payload["sensor_name"] = self.sensor_name
-        json_payload["sensor_type"] = self.sensor_type
-        json_payload["sensor_value"] = self.current_value
-        json_payload["warning"] = warning_msg
-        
-        str_payload = "{}".format(json_payload)
-        
-        self.mqtt.publish(self.topic,str_payload)
-        
-        
+    p2.send_message("TESTE", "P1")
+    print("oi")
+
+if __name__ == "__main__":
+    main()
