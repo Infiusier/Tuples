@@ -133,7 +133,7 @@ class CreationWindow(QWidget,QtCore.QObject):
         self.object_parent_vm_combobox.hide()
         
 #------------------------- Configure Widgets -------------------------------------
-        self.object_type_combobox.addItems(["",Object_Type.HOST,Object_Type.PROCESS,Object_Type.CLOUD,Object_Type.VM])
+        self.object_type_combobox.addItems(["",Object_Type.CLOUD,Object_Type.HOST,Object_Type.VM,Object_Type.PROCESS])
         self.object_type_combobox.currentTextChanged.connect(self.object_type_callback)
         self.create_object_button.clicked.connect(self.create_callback)
         self.setLayout(mainLayout)
@@ -243,7 +243,8 @@ class MainWindow(QtWidgets.QMainWindow,Ui_MainWindow,QtCore.QObject):
         self.vms_combobox.activated.connect(self.delete_vm_combobox_callback)
         self.process_combobox.activated.connect(self.delete_process_combobox_callback)
         
-        
+        self.migrate_object_type_combobox.activated.connect(self.migrate_object_type_callback)
+        self.migrate_button.clicked.connect(self.migrate_callback)
 
 #---------------------------------------------------CALLBACKS---------------------------------------------------
     def p_clouds_combobox_callback(self):
@@ -342,8 +343,7 @@ class MainWindow(QtWidgets.QMainWindow,Ui_MainWindow,QtCore.QObject):
                 vm_parent.append(process)
                 self.list_of_process.append(process)
         
-        self.update_open_process_comboboxes()
-        self.update_delete_comboboxes()
+        self.update_gui()
                 
     def launch_creation_window(self):
         self.creation_window = CreationWindow()
@@ -427,9 +427,119 @@ class MainWindow(QtWidgets.QMainWindow,Ui_MainWindow,QtCore.QObject):
             
             list_of_the_object.remove(object_to_delete)
             
+        self.update_gui()
+        
+    def migrate_object_type_callback(self):
+        self.migrate_object_name_combobox.clear()
+            
+        if self.migrate_object_type_combobox.currentText() == Object_Type.HOST:
+            items = []
+            for host in self.list_of_hosts:
+                items.append(f'{host.parent_cloud.name}->{host.name}')
+            self.migrate_object_name_combobox.addItems(items)
+            
+        if self.migrate_object_type_combobox.currentText() == Object_Type.VM:
+            items = []
+            for vm in self.list_of_vms:
+                items.append(f'{vm.parent_host.parent_cloud.name}->{vm.parent_host.name}->{vm.name}')
+            self.migrate_object_name_combobox.addItems(items)
+            
+        if self.migrate_object_type_combobox.currentText() == Object_Type.PROCESS:
+            items = []
+            for process in self.list_of_process:
+                items.append(f'{process.parent_vm.parent_host.parent_cloud.name}->{process.parent_vm.parent_host.name}->{process.parent_vm.name}->{process.name}')
+            self.migrate_object_name_combobox.addItems(items)
+            
+        self.migrate_object_destination_callback()
+            
+    def migrate_object_destination_callback(self):
+        self.migrate_object_destination_combobox.clear()
+            
+        if self.migrate_object_type_combobox.currentText() == Object_Type.HOST:
+            items = []
+            for cloud in self.list_of_clouds:
+                items.append(f'{cloud.name}')
+            self.migrate_object_destination_combobox.addItems(items)
+            
+        if self.migrate_object_type_combobox.currentText() == Object_Type.VM:
+            items = []
+            for host in self.list_of_hosts:
+                items.append(f'{host.parent_cloud.name}->{host.name}')
+            self.migrate_object_destination_combobox.addItems(items)
+            
+        if self.migrate_object_type_combobox.currentText() == Object_Type.PROCESS:
+            items = []
+            for vm in self.list_of_vms:
+                items.append(f'{vm.parent_host.parent_cloud.name}->{vm.parent_host.name}->{vm.name}')
+            self.migrate_object_destination_combobox.addItems(items)
+            
+    def migrate_callback(self):
+        if len(self.migrate_object_destination_combobox.currentText()) == 0:
+            return
+        if len(self.migrate_object_name_combobox.currentText()) == 0:
+            return
+        if len(self.migrate_object_type_combobox.currentText()) == 0:
+            return
+        
+        if self.migrate_object_type_combobox.currentText() == Object_Type.HOST:
+            host_path = self.migrate_object_name_combobox.currentText()
+            host_path = host_path.split("->")
+            
+            host_destination = self.migrate_object_destination_combobox.currentText()
+            host_destination = host_destination.split("->")
+            
+            cloud_destination = [cloud for cloud in self.list_of_clouds if (cloud.name ==  host_destination[0])][0]
+            
+            host = [host for host in self.list_of_hosts if (host.name ==  host_path[1] and host.parent_cloud.name == host_path[0])][0]            
+            
+            while 1:
+                if self.check_if_name_exists_in_container(host.name,cloud_destination.name, Object_Type.HOST) == False:
+                    status,name = self.show_dialog_popup()
+                    if status == True:
+                        host.name = name
+                        break
+                
+            host.parent_cloud.list_of_hosts.remove(host)
+            host.parent_cloud = cloud_destination
+            cloud_destination.append(host)
+            
+        if self.migrate_object_type_combobox.currentText() == Object_Type.VM:
+            vm_path = self.migrate_object_name_combobox.currentText()
+            vm_path = vm_path.split("->")
+            
+            vm_destination = self.migrate_object_destination_combobox.currentText()
+            vm_destination = vm_destination.split("->")
+            
+            host_destination = [host for host in self.list_of_hosts if (host.name ==  vm_destination[1] and host.parent_cloud.name == vm_destination[0])][0]
+            
+            vm = [vm for vm in self.list_of_vms if (vm.name ==  vm_path[2] and vm.parent_host.name == vm_path[1] and vm.parent_host.parent_cloud.name == vm_path[0])][0]
+            vm.parent_host.list_of_vms.remove(vm)
+            vm.parent_host = host_destination
+            host_destination.append(vm)
+            
+        if self.migrate_object_type_combobox.currentText() == Object_Type.PROCESS:
+            process_path = self.migrate_object_name_combobox.currentText()
+            process_path = process_path.split("->")
+            
+            process_destination = self.migrate_object_destination_combobox.currentText()
+            process_destination = process_destination.split("->")
+            
+            vm_destination = [vm for vm in self.list_of_vms if (vm.name ==  process_destination[2] and vm.parent_host.name == process_destination[1] and vm.parent_host.parent_cloud.name == process_destination[0])][0]
+            
+            process = [process for process in self.list_of_process if (process.name ==  process_path[3] and process.parent_vm.name == process_path[2] and process.parent_vm.parent_host.name == process_path[1] and process.parent_vm.parent_host.parent_cloud.name == process_path[0])][0]
+            process.parent_vm.list_of_process.remove(process)
+            process.parent_vm = vm_destination
+            process.update_space(vm_destination.space)
+            vm_destination.append(process)
+        
+        self.update_gui()
+            
+#------------------------------------------------------ FUNCTIONS ----------------------------------------------------
+    def update_gui(self):
         self.update_delete_comboboxes()
         self.update_open_process_comboboxes()
-#------------------------------------------------------ FUNCTIONS ----------------------------------------------------
+        self.migrate_object_type_callback()
+        
     def update_delete_comboboxes(self):
         self.clouds_combobox.clear()
         self.hosts_combobox.clear()
@@ -473,10 +583,11 @@ class MainWindow(QtWidgets.QMainWindow,Ui_MainWindow,QtCore.QObject):
                 list_of_process = [vm for vm in self.list_of_vms if vm.name == object_parent][0].list_of_process
                 return False if object_name in [process.name for process in list_of_process] else True
 
-    
-    
-    
-        
-#------------------------ GUI HANDLING -------------------------------------
-        
-            
+    def show_dialog_popup(self):
+        text, ok = QInputDialog().getText(self, "Renomear objeto","Novo nome:", QLineEdit.Normal,"")
+ 
+        if ok and len(text) > 0:
+            return True,text
+        else:
+            return False,""
+

@@ -288,6 +288,94 @@ class Ui_MainWindow(object):
 "border-radius: 10px;\n"
 "padding-left:5px;\n"
 "padding-right:5px;")
+        self.frame_4 = QFrame(self.frame)
+        self.frame_4.setObjectName(u"frame_4")
+        self.frame_4.setGeometry(QRect(420, 90, 171, 251))
+        self.frame_4.setStyleSheet(u"background-color: rgb(196, 196, 196);\n"
+"border-radius: 5px;\n"
+"\n"
+"")
+        self.frame_4.setFrameShape(QFrame.StyledPanel)
+        self.frame_4.setFrameShadow(QFrame.Raised)
+        self.migrate_button = QPushButton(self.frame_4)
+        self.migrate_button.setObjectName(u"migrate_button")
+        self.migrate_button.setGeometry(QRect(26, 210, 121, 31))
+        self.migrate_button.setFont(font1)
+        self.migrate_button.setStyleSheet(u"QPushButton{\n"
+"border-radius:10px;\n"
+"background-color: #E5E5E5;\n"
+"}\n"
+"\n"
+"QPushButton:hover{\n"
+"border-radius:5px;\n"
+"background-color: #605e5e;\n"
+"border: 1px solid black;\n"
+"color: white;\n"
+"}\n"
+"\n"
+"QPushButton:pressed{\n"
+"border-radius:5px;\n"
+"background-color: #ebc000;\n"
+"border: 1px solid black;\n"
+"color: black;\n"
+"}")
+        self.label_10 = QLabel(self.frame_4)
+        self.label_10.setObjectName(u"label_10")
+        self.label_10.setGeometry(QRect(40, 10, 91, 21))
+        self.label_10.setFont(font2)
+        self.label_10.setStyleSheet(u"background-color:#E5E5E5;\n"
+"color: #313132;\n"
+"border-radius: 10px;\n"
+"padding-left:5px;\n"
+"padding-right:5px;")
+        self.label_10.setAlignment(Qt.AlignCenter)
+        self.migrate_object_type_combobox = QComboBox(self.frame_4)
+        self.migrate_object_type_combobox.addItem("")
+        self.migrate_object_type_combobox.addItem("")
+        self.migrate_object_type_combobox.addItem("")
+        self.migrate_object_type_combobox.setObjectName(u"migrate_object_type_combobox")
+        self.migrate_object_type_combobox.setGeometry(QRect(10, 40, 151, 22))
+        self.migrate_object_type_combobox.setStyleSheet(u"background-color:#E5E5E5;\n"
+"color: #313132;\n"
+"border-radius: 10px;\n"
+"padding-left:5px;\n"
+"padding-right:5px;")
+        self.label_11 = QLabel(self.frame_4)
+        self.label_11.setObjectName(u"label_11")
+        self.label_11.setGeometry(QRect(40, 80, 91, 21))
+        self.label_11.setFont(font2)
+        self.label_11.setStyleSheet(u"background-color:#E5E5E5;\n"
+"color: #313132;\n"
+"border-radius: 10px;\n"
+"padding-left:5px;\n"
+"padding-right:5px;")
+        self.label_11.setAlignment(Qt.AlignCenter)
+        self.migrate_object_name_combobox = QComboBox(self.frame_4)
+        self.migrate_object_name_combobox.setObjectName(u"migrate_object_name_combobox")
+        self.migrate_object_name_combobox.setGeometry(QRect(10, 110, 151, 22))
+        self.migrate_object_name_combobox.setStyleSheet(u"background-color:#E5E5E5;\n"
+"color: #313132;\n"
+"border-radius: 10px;\n"
+"padding-left:5px;\n"
+"padding-right:5px;")
+        self.label_13 = QLabel(self.frame_4)
+        self.label_13.setObjectName(u"label_13")
+        self.label_13.setGeometry(QRect(40, 150, 91, 21))
+        self.label_13.setFont(font2)
+        self.label_13.setStyleSheet(u"background-color:#E5E5E5;\n"
+"color: #313132;\n"
+"border-radius: 10px;\n"
+"padding-left:5px;\n"
+"padding-right:5px;")
+        self.label_13.setAlignment(Qt.AlignCenter)
+        self.migrate_object_destination_combobox = QComboBox(self.frame_4)
+        self.migrate_object_destination_combobox.setObjectName(u"migrate_object_destination_combobox")
+        self.migrate_object_destination_combobox.setGeometry(QRect(10, 180, 151, 22))
+        self.migrate_object_destination_combobox.setStyleSheet(u"background-color:#E5E5E5;\n"
+"color: #313132;\n"
+"border-radius: 10px;\n"
+"padding-left:5px;\n"
+"padding-right:5px;")
         MainWindow.setCentralWidget(self.centralwidget)
 
         self.retranslateUi(MainWindow)
@@ -312,5 +400,13 @@ class Ui_MainWindow(object):
         self.label_7.setText(QCoreApplication.translate("MainWindow", u"Hosts", None))
         self.label_8.setText(QCoreApplication.translate("MainWindow", u"VMs", None))
         self.label_9.setText(QCoreApplication.translate("MainWindow", u"Process", None))
+        self.migrate_button.setText(QCoreApplication.translate("MainWindow", u"Migrate", None))
+        self.label_10.setText(QCoreApplication.translate("MainWindow", u"Object Type", None))
+        self.migrate_object_type_combobox.setItemText(0, QCoreApplication.translate("MainWindow", u"HOST", None))
+        self.migrate_object_type_combobox.setItemText(1, QCoreApplication.translate("MainWindow", u"VM", None))
+        self.migrate_object_type_combobox.setItemText(2, QCoreApplication.translate("MainWindow", u"PROCESS", None))
+
+        self.label_11.setText(QCoreApplication.translate("MainWindow", u"Object  Name", None))
+        self.label_13.setText(QCoreApplication.translate("MainWindow", u"Destination", None))
     # retranslateUi
 
