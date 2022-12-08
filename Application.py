@@ -96,14 +96,17 @@ class Process():
             print(f"Message received: {message}")
             msg = f"Id: {message[1]['id']} --> {message[1]['payload']}"
             self.gui_controller.append_to_log(msg)
+            
+        print("Process %s has stopped!" % self.name)
 
     def update_space(self,space):
         self.space = space
         
     def stop(self):
         self.is_running = False
+        self.send_message_callback({},self.name)
         
-    def send_message_callback(self,message,id):
+    def send_message_callback(self,message: dict,id: str):
         print(message)
         self.space.eval((self.name,self.send_message(message,id)))
         self.space.run()

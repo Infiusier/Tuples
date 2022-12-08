@@ -232,10 +232,18 @@ class MainWindow(QtWidgets.QMainWindow,Ui_MainWindow,QtCore.QObject):
         self.list_of_process = []
         
         self.create_button.clicked.connect(self.launch_creation_window)
+        self.delete_button.clicked.connect(self.delete_object_callback)
         self.open_process_button.clicked.connect(self.open_process_callback)
         self.p_clouds_combobox.currentIndexChanged.connect(self.p_clouds_combobox_callback)
         self.p_hosts_combobox.currentIndexChanged.connect(self.p_hosts_combobox_callback)
         self.p_vms_combobox.currentIndexChanged.connect(self.p_vms_combobox_callback)
+        
+        self.clouds_combobox.activated.connect(self.delete_cloud_combobox_callback)
+        self.hosts_combobox.activated.connect(self.delete_host_combobox_callback)
+        self.vms_combobox.activated.connect(self.delete_vm_combobox_callback)
+        self.process_combobox.activated.connect(self.delete_process_combobox_callback)
+        
+        
 
 #---------------------------------------------------CALLBACKS---------------------------------------------------
     def p_clouds_combobox_callback(self):
@@ -335,7 +343,7 @@ class MainWindow(QtWidgets.QMainWindow,Ui_MainWindow,QtCore.QObject):
                 self.list_of_process.append(process)
         
         self.update_open_process_comboboxes()
-        
+        self.update_delete_comboboxes()
                 
     def launch_creation_window(self):
         self.creation_window = CreationWindow()
@@ -345,7 +353,103 @@ class MainWindow(QtWidgets.QMainWindow,Ui_MainWindow,QtCore.QObject):
                                          VM = [vm.name for vm in self.list_of_vms],
                                          PROCESS = [process.name for process in self.list_of_process])
         self.creation_window.display_window()
+        
+    def delete_cloud_combobox_callback(self):
+        #self.clouds_combobox.setCurrentIndex(0)
+        self.hosts_combobox.setCurrentIndex(0)
+        self.vms_combobox.setCurrentIndex(0)
+        self.process_combobox.setCurrentIndex(0)
+        
+    def delete_host_combobox_callback(self):
+        self.clouds_combobox.setCurrentIndex(0)
+        #self.hosts_combobox.setCurrentIndex(0)
+        self.vms_combobox.setCurrentIndex(0)
+        self.process_combobox.setCurrentIndex(0)
+        
+    def delete_vm_combobox_callback(self):
+        self.clouds_combobox.setCurrentIndex(0)
+        self.hosts_combobox.setCurrentIndex(0)
+        #self.vms_combobox.setCurrentIndex(0)
+        self.process_combobox.setCurrentIndex(0)
+        
+    def delete_process_combobox_callback(self):
+        self.clouds_combobox.setCurrentIndex(0)
+        self.hosts_combobox.setCurrentIndex(0)
+        self.vms_combobox.setCurrentIndex(0)
+        #self.process_combobox.setCurrentIndex(0)
+        
+    def delete_object_callback(self):
+        if self.clouds_combobox.currentIndex() != 0:
+            object_to_delete = [cloud for cloud in self.list_of_clouds if cloud.name == self.clouds_combobox.currentText()][0]
+            list_of_the_object = self.list_of_clouds
+            
+        elif self.hosts_combobox.currentIndex() != 0:
+            object_to_delete = [host for host in self.list_of_hosts if host.name == self.hosts_combobox.currentText()][0]
+            list_of_the_object = self.list_of_hosts
+            
+        elif self.vms_combobox.currentIndex() != 0:
+            object_to_delete = [vm for vm in self.list_of_vms if vm.name == self.vms_combobox.currentText()][0]
+            list_of_the_object = self.list_of_vms
+            
+        elif self.process_combobox.currentIndex() != 0:
+            object_to_delete = [process for process in self.list_of_process if process.name == self.process_combobox.currentText()][0]
+            list_of_the_object = self.list_of_process
+            
+        else:
+            return
+        
+        if type(object_to_delete) == Process:
+             object_to_delete.stop()
+             object_to_delete.parent_vm.remove(object_to_delete)
+             list_of_the_object.remove(object_to_delete)
+             
+        if type(object_to_delete) == Vm:
+            if len(object_to_delete.list_of_process) != 0:
+                self.log.append("Can't remove Vm! It has running process")
+                return
+            
+            object_to_delete.stop()
+            object_to_delete.parent_host.remove(object_to_delete)
+            list_of_the_object.remove(object_to_delete)
+            
+        if type(object_to_delete) == Host:
+            if len(object_to_delete.list_of_vms) != 0:
+                self.log.append("Can't remove Host! It has running Vms")
+                return
+            
+            object_to_delete.parent_cloud.remove(object_to_delete)
+            list_of_the_object.remove(object_to_delete)
+            
+        if type(object_to_delete) == Cloud:
+            if len(object_to_delete.list_of_hosts) != 0:
+                self.log.append("Can't remove Cloud! It has running Hosts")
+                return
+            
+            list_of_the_object.remove(object_to_delete)
+            
+        self.update_delete_comboboxes()
+        self.update_open_process_comboboxes()
 #------------------------------------------------------ FUNCTIONS ----------------------------------------------------
+    def update_delete_comboboxes(self):
+        self.clouds_combobox.clear()
+        self.hosts_combobox.clear()
+        self.vms_combobox.clear()
+        self.process_combobox.clear()
+        
+        list_of_clouds = [cloud.name for cloud in self.list_of_clouds]
+        list_of_hosts = [host.name for host in self.list_of_hosts]
+        list_of_vms = [vm.name for vm in self.list_of_vms]
+        list_of_process = [process.name for process in self.list_of_process]
+        
+        list_of_clouds.insert(0,"")
+        list_of_hosts.insert(0,"")
+        list_of_vms.insert(0,"")
+        list_of_process.insert(0,"")
+        
+        self.clouds_combobox.addItems(list_of_clouds)
+        self.hosts_combobox.addItems(list_of_hosts)
+        self.vms_combobox.addItems(list_of_vms)
+        self.process_combobox.addItems(list_of_process)
 
     def update_open_process_comboboxes(self):
         self.p_clouds_combobox.clear()
